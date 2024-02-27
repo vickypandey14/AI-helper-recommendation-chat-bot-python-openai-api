@@ -2,6 +2,24 @@ import openai
 import os
 from dotenv import load_dotenv, find_dotenv
 
+# Constants
+OPENAI_ENGINE = "text-davinci-002"
+MAX_TOKENS = 150
+
+# Function to handle OpenAI requests with exception handling
+def get_openai_response(prompt):
+    try:
+        response = openai.Completion.create(
+            engine=OPENAI_ENGINE,
+            prompt=prompt,
+            max_tokens=MAX_TOKENS,
+        )
+        return response.choices[0].text
+    except Exception as e:
+        print(f"Error processing OpenAI request: {e}")
+        return None
+
+# Checking if dotenv file is loaded
 load_dotenv(find_dotenv())
 
 # Checking if dotenv file is loaded
@@ -30,6 +48,7 @@ projects = [
     },
 ]
 
+# Function to find projects related to user input
 def find_project(user_input):
     # Score projects based on the number of matches
     project_scores = []
@@ -51,23 +70,22 @@ def find_project(user_input):
 
     return matching_projects
 
+# Function to print project information and additional information from OpenAI
 def get_project_info(project):
     print(f"Project Name: {project['project_name']}")
     print(f"Project URL: {project['project_url']}")
     print(f"Project Description: {project['project_description']}")
-    
-    # Use OpenAI API to provide additional information based on the project description
-    response = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=f"Why is the project '{project['project_name']}' useful?\n\n{project['project_description']}\n\n",
-        max_tokens=150,
-    )
-    print("AI Assistant:", response.choices[0].text)
+
+    prompt = f"Why is the project '{project['project_name']}' useful?\n\n{project['project_description']}\n\n"
+    ai_response = get_openai_response(prompt)
+
+    if ai_response:
+        print("AI Assistant:", ai_response)
 
 # Start a conversation loop
 while True:
     # Ask for user input
-    user_input = input("Ask AI assistant: ")
+    user_input = input("Ask AI assistant (type 'exit' or 'quit' to end): ")
 
     # Check if the user wants to exit
     if user_input.lower() in ["exit", "quit"]:
@@ -83,4 +101,4 @@ while True:
             get_project_info(project)
             break  # Break out of the loop after printing the information once
     else:
-        print("No projects are found.")
+        print("No matching projects found. Please try a different query.")
